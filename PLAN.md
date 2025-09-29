@@ -50,7 +50,9 @@ compress=zstd:3,ssd,space_cache=v2,noatime,discard=async
 *(If you prefer periodic TRIM, drop `discard=async` and enable `fstrim.timer`.)*
 
 **Swap**
-- `lv_swap` sized for hibernate if user selects “Enable hibernation”; otherwise smaller.
+- **ZRAM default**: enabled on all installs via `zram-tools` using `zstd`, target size **200% of RAM** (kernel will cap appropriately), swap **priority 100**.
+- **Disk-backed swap (for hibernate)**: if the installer option **Enable hibernation** is selected, create an LVM swap LV equal to RAM. Keep ZRAM at higher priority so it services runtime swapping; disk swap exists primarily for hibernate.
+- **No hibernate** → no disk swap LV/file; ZRAM-only.
 
 **LUKS2 defaults**
 - Cipher `aes-xts-plain64` (keysize 512), PBKDF `argon2id` (iter-time ~2000ms).
@@ -122,7 +124,7 @@ compress=zstd:3,ssd,space_cache=v2,noatime,discard=async
 
 ```
 packages/
-  sodaos-core/                 # firmware, microcode, cryptsetup-initramfs, lvm2, btrfs-progs, ukify/kernel-install, flatpak, bootctl deps
+  sodaos-core/                 # firmware, microcode, cryptsetup-initramfs, lvm2, btrfs-progs, zram-tools, ukify/kernel-install, flatpak, bootctl deps
   sodaos-gnome/                # minimal GNOME session (Files, Terminal, Settings, Software)
   sodaos-desktop-defaults/     # dconf defaults, theming, fstrim.timer, Firefox deb setup, Flathub bootstrap
   sodaos-desktop-amd/          # mesa-vulkan-drivers, vulkan-tools, firmware; optional linux-generic-hwe-24.04
@@ -159,7 +161,7 @@ packages/
 
 **Installer options**
 - **Encryption**: passphrase input with strength meter.
-- **Hibernate**: checkbox to size swap and add `resume=UUID=...`.
+- **Hibernate**: checkbox. If selected → create disk swap LV = RAM and add `resume=UUID=...`; if not selected → ZRAM-only (no disk swap).
 
 ---
 
@@ -265,6 +267,81 @@ sodaos/
 - **v1.0**: Hardening, more hardware QA, docs polish; consider Secure Boot/signing later or keep out of scope.
 
 ---
+
+
+---
+
+## 15) Memory Compression (ZRAM)
+
+**Policy**
+- Enable **ZRAM swap by default** on all installs for faster, SSD-friendly swapping.
+- Algorithm: **zstd**; target size: **min(200% of physical RAM, 16 GiB)**; swap **priority 100** so ZRAM is preferred over any disk swap.
+
+**Packages**
+- Include `zram-tools` in `sodaos-core` (unit disabled). Use a **custom oneshot** to control size cap reliably across kernels.
+
+**Custom unit**
+Create `/usr/local/sbin/sodaos-zram-setup`:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Compute size: min(2 * RAM, 16GiB)
+ram_bytes=$(awk '/MemTotal/ {print $2 * 1024}' /proc/meminfo)
+target=$(( ram_bytes * 2 ))
+max=$(( 16 * 1024 * 1024 * 1024 ))
+size=$(( target < max ? target : max ))
+
+# Load module if needed
+modprobe zram || true
+
+# Create a single zram device
+dev=/dev/zram0
+# Reset if already configured
+if [ -e /sys/class/zram-control/hot_remove ]; then
+  echo 0 > /sys/class/zram-control/hot_remove || true
+fi
+
+echo zstd > /sys/block/zram0/comp_algorithm
+echo $size > /sys/block/zram0/disksize
+
+mkswap $dev
+# Priority 100 so it is preferred over any disk swap
+swapon -p 100 $dev
+```
+
+Make it executable:
+```bash
+chmod +x /usr/local/sbin/sodaos-zram-setup
+```
+
+Create the unit `/etc/systemd/system/sodaos-zram.service`:
+```ini
+[Unit]
+Description=SodaOS ZRAM swap (capped at 16GiB)
+DefaultDependencies=no
+After=local-fs.target
+Before=swap.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/sodaos-zram-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=swap.target
+```
+
+Disable the distro service and enable ours:
+```bash
+systemctl disable --now zramswap.service || true
+systemctl enable --now sodaos-zram.service
+```
+
+**Hibernate interaction**
+- If the user enables **Hibernate** in the installer, create a disk swap LV equal to RAM and add `resume=UUID=<swap>` to the kernel cmdline.
+- Keep ZRAM at **higher priority**; disk swap exists primarily to support hibernation.
+
 
 ## 14) Open Questions (to finalize before build)
 
