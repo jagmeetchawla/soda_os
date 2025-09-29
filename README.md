@@ -6,6 +6,8 @@ A developer-focused Linux distribution that combines the best aspects of Pop!_OS
 
 SodaOS aims to provide developers with a polished, productive Linux environment that features:
 
+📋 **[View the detailed technical plan →](PLAN.md)**
+
 - **Clean GNOME Desktop**: Vanilla GNOME experience without heavy customizations
 - **Btrfs Filesystem**: Modern filesystem with snapshots and better reliability (like Fedora)
 - **Developer-First Philosophy**: Pre-configured development tools and optimized workflows (like Pop!_OS)
