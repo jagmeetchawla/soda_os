@@ -221,6 +221,8 @@ sodaos/
 
 ## 10) Defaults & Tweaks
 
+- Default shell: **Bash** (no zsh/oh-my-zsh by default).
+
 - Enable `fstrim.timer`.
 - Sensible GNOME dconf (night light on, disable crash reports by default, etc.).
 - `vm.swappiness=10` on laptops (via `/etc/sysctl.d/99-sodaos.conf`).
@@ -342,6 +344,32 @@ systemctl enable --now sodaos-zram.service
 - If the user enables **Hibernate** in the installer, create a disk swap LV equal to RAM and add `resume=UUID=<swap>` to the kernel cmdline.
 - Keep ZRAM at **higher priority**; disk swap exists primarily to support hibernation.
 
+
+
+---
+
+## 16) Opinionated Defaults Policy (Keep Base Minimal)
+
+- **Default shell stays Bash.** Do **not** set `zsh` (or `oh-my-zsh`) as default system-wide.
+- **No heavy theming by default.** Ship vanilla GNOME; optional themes/fonts are opt-in.
+- **No heavyweight developer stacks preinstalled.** Keep base small; expose curated opt-in packs.
+
+
+
+---
+
+## 17) First-boot Optional Packs (Welcome Flow)
+
+- Ship a lightweight **SodaOS Welcome** app (GTK or simple shell dialog) that runs on first login.
+- It **offers checkboxes** for optional packs; nothing is preselected. Examples:
+  - **Zsh pack**: install `zsh`, set as *user* default shell *only if user opts in*; optionally offer to install **oh-my-zsh** unattended.
+  - **Developer pack**: git, build tools, Python pip, rustup bootstrap.
+  - **AI pack**: add NVIDIA CUDA repo (NVIDIA ISO only), provide scripts to install toolchains later.
+  - **Fonts pack**: JetBrains Mono, Nerd Fonts subset.
+  - **Creator pack**: Flatpak installs (GIMP, Inkscape, Krita, OBS).
+  - **Gaming pack**: Steam (Flatpak) + GameMode.
+- The Welcome app can be re-run from the menu (**SodaOS → Welcome**) so users can add packs later.
+- Implementation detail: each pack is just a meta-package (or script) so uninstallation is clean.
 
 ## 14) Open Questions (to finalize before build)
 
