@@ -1,0 +1,100 @@
+# Build artifacts
+build/output/
+build/cache/
+build/work/
+build/tmp/
+*.iso
+*.img
+*.squashfs
+
+# Live build artifacts
+config/
+auto/
+cache/
+chroot/
+binary/
+source/
+.build/
+
+# Package building
+*.deb
+*.rpm
+*.tar.gz
+*.tar.xz
+debian/files
+debian/debhelper-build-stamp
+debian/.debhelper/
+debian/*/
+
+# Logs
+*.log
+logs/
+build.log
+error.log
+
+# Temporary files
+*~
+*.swp
+*.swo
+
+# macOS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.AppleDouble
+.LSOverride
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# macOS Finder attributes
+.Spotlight-V100/
+.Trashes/
+__MACOSX/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+.vim/
+
+# OS generated files
+.directory
+desktop.ini
+
+# Custom configuration that shouldn't be tracked
+config/local/
+secrets/
+*.key
+*.pem
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Node modules (if using Node.js tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Backup files
+*.bak
+*.backup
+*.old
